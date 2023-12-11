@@ -11,6 +11,7 @@ djangorestframework = "^3.14.0"
 psycopg2-binary = "^2.9.9"
 black = "^23.11.0"
 isort = "^5.13.0"
+python-dotenv = "^1.0.0"
 
 
 [build-system]
