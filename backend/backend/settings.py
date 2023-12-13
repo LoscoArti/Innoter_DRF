@@ -9,6 +9,9 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = str(os.getenv("SECRET_KEY"))
 
+TOKEN_SECRET_KEY = os.getenv("TOKEN_SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+
 DEBUG = True
 
 ALLOWED_HOSTS = []
