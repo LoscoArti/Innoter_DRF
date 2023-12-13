@@ -41,12 +41,8 @@ class JWTAuthenticationMiddleware:
         if not auth_header or not auth_header.startswith("Bearer "):
             return None
 
-        parts = auth_header.split()
-
-        if len(parts) == 2:
-            return parts[1]
-
-        return None
+        _, token = auth_header.split(" ", 1)
+        return token
 
     def build_unauthorized_response(self):
         return JsonResponse({"error": "Unauthorized"}, status=401)
