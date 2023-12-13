@@ -1,6 +1,7 @@
 import jwt
-from django.conf import settings
 from django.http import JsonResponse
+
+from backend.settings import ALGORITHM, TOKEN_SECRET_KEY
 
 
 class JWTAuthenticationMiddleware:
@@ -9,7 +10,7 @@ class JWTAuthenticationMiddleware:
 
     def __call__(self, request):
         if request.path.startswith("/admin/"):
-            # Skip authentication for Django admin
+            # Allow access to the admin panel without a token
             return self.get_response(request)
 
         token = self.get_token_from_request(request)
@@ -17,12 +18,18 @@ class JWTAuthenticationMiddleware:
             return self.build_unauthorized_response()
 
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, key=TOKEN_SECRET_KEY, algorithms=ALGORITHM)
         except jwt.DecodeError:
             return self.build_unauthorized_response()
 
-        # Attach the authenticated user to the request object
-        request.user = payload["user"]
+        user_info = {
+            "user_id": payload["user_id"],
+            "group_id": payload["group_id"],
+            "username": payload["username"],
+            "role": payload["role"],
+        }
+
+        request.user = user_info
 
         response = self.get_response(request)
 
@@ -30,20 +37,16 @@ class JWTAuthenticationMiddleware:
 
     def get_token_from_request(self, request):
         auth_header = request.headers.get("Authorization")
-        if not auth_header:
+
+        if not auth_header or not auth_header.startswith("Bearer "):
             return None
 
         parts = auth_header.split()
-        if parts[0].lower() != "bearer":
-            return None
 
-        if len(parts) == 1:
-            return None
+        if len(parts) == 2:
+            return parts[1]
 
-        if len(parts) > 2:
-            return None
-
-        return parts[1]
+        return None
 
     def build_unauthorized_response(self):
         return JsonResponse({"error": "Unauthorized"}, status=401)
