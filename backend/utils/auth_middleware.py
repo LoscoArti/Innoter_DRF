@@ -1,5 +1,7 @@
-import jwt
+import datetime
+
 from django.http import JsonResponse
+from jwt import decode, exceptions
 
 from backend.settings import ALGORITHM, TOKEN_SECRET_KEY
 
@@ -9,7 +11,7 @@ class JWTAuthenticationMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path.startswith("/admin/"):
+        if request.path in ["/favicon.ico", "/admin/"]:
             # Allow access to the admin panel without a token
             return self.get_response(request)
 
@@ -18,8 +20,13 @@ class JWTAuthenticationMiddleware:
             return self.build_unauthorized_response()
 
         try:
-            payload = jwt.decode(token, key=TOKEN_SECRET_KEY, algorithms=ALGORITHM)
-        except jwt.DecodeError:
+            payload = decode(token, key=TOKEN_SECRET_KEY, algorithms=ALGORITHM)
+            if (
+                payload["exp"]
+                < datetime.datetime.now(datetime.timezone.utc).timestamp()
+            ):
+                return self.build_unauthorized_response()
+        except exceptions.DecodeError:
             return self.build_unauthorized_response()
 
         user_info = {
