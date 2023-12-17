@@ -5,7 +5,26 @@ from rest_framework import serializers
 class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
-        fields = "__all__"
+        fields = (
+            "id",
+            "name",
+            "description",
+            "user_id",
+            "user_group_id",
+            "image_url",
+            "tags",
+            "is_blocked",
+            "unblock_date",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "user_id",
+            "user_group_id",
+            "created_at",
+            "updated_at",
+        )
 
 
 class PageFollowerSerializer(serializers.ModelSerializer):
@@ -13,4 +32,5 @@ class PageFollowerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageFollower
-        fields = "__all__"
+        fields = ("id", "page", "user_id")
+        read_only_fields = ("id",)
