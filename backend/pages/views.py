@@ -1,10 +1,17 @@
-from pages.models import Page, PageFollower
+from pages.models import Page
 from pages.permissions import IsAdmin, IsModerator, IsUser
-from pages.serializers import PageFollowerSerializer, PageSerializer
-from rest_framework import generics, response, status, views
+from pages.serializers import PageSerializer
+from rest_framework import mixins, viewsets
 
 
-class PageCreateView(generics.ListCreateAPIView):
+class PageViewSet(
+    viewsets.GenericViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+):
     queryset = Page.objects.all()
     serializer_class = PageSerializer
 
@@ -17,22 +24,16 @@ class PageCreateView(generics.ListCreateAPIView):
             unblock_date=None,
         )
 
-
-class PageRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Page.objects.all()
-    serializer_class = PageSerializer
-
     def get_permissions(self):
         permissions = []
-        if self.request.method == "DELETE":
+        if self.request.method in ["POST", "GET"]:
+            permissions.append(IsUser())
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
             if self.request.user["role"] == "ADMIN":
                 permissions.append(IsAdmin())
             elif self.request.user["role"] == "MODERATOR":
                 permissions.append(IsModerator())
             elif self.request.user["role"] == "USER":
-                permissions.append(IsUser())
-        if self.request.method == "PATCH":
-            if self.request.user["role"] == "USER":
                 permissions.append(IsUser())
         return permissions
 

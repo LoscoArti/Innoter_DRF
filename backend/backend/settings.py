@@ -109,6 +109,6 @@ REST_FRAMEWORK = {
         "utils.custom_authentication.CustomJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "utils.permissions.IsLoggedIn",
+        "utils.auth_permissions.IsLoggedIn",
     ],
 }

@@ -1,12 +1,8 @@
-from django.urls import path
+from pages.views import PageViewSet
+from rest_framework.routers import DefaultRouter, SimpleRouter
 
-from .views import PageCreateView, PageRetrieveUpdateDestroyView
+router = SimpleRouter()
+router.register(r"pages", PageViewSet, basename="pages")
 
-urlpatterns = [
-    path("pages/", PageCreateView.as_view(), name="page-create"),
-    path(
-        "pages/<uuid:pk>/",
-        PageRetrieveUpdateDestroyView.as_view(),
-        name="page-update-delete",
-    ),
-]
+urlpatterns = router.urls
+print(router.urls)
