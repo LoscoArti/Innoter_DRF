@@ -9,7 +9,7 @@ class Page(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     user_id = models.UUIDField()
-    user_group_id = models.UUIDField(null=True)
+    user_group_id = models.IntegerField(null=True)
     image_url = models.URLField(blank=True)
     tags = models.ManyToManyField(Tag, related_name="pages")
     is_blocked = models.BooleanField(default=False)
