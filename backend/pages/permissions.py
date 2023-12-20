@@ -16,6 +16,8 @@ class IsModerator(permissions.BasePermission):
         return request.user["role"] == "MODERATOR"
 
     def has_object_permission(self, request, view, obj):
+        if view.action == "followers":
+            return obj.user_group_id == request.user["group_id"]
         return (
             request.user["role"] == "MODERATOR"
             and obj.user_group_id == request.user["group_id"]
@@ -27,6 +29,8 @@ class IsUser(permissions.BasePermission):
         return request.user["role"] == "USER"
 
     def has_object_permission(self, request, view, obj):
+        if view.action == "followers":
+            return obj.user_id == UUID(request.user["user_id"])
         return request.user["role"] == "USER" and obj.user_id == UUID(
             request.user["user_id"]
         )

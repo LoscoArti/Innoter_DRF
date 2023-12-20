@@ -5,4 +5,3 @@ router = SimpleRouter()
 router.register(r"pages", PageViewSet, basename="pages")
 
 urlpatterns = router.urls
-print(router.urls)
