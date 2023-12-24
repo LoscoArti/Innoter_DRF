@@ -1,6 +1,7 @@
 from pages.models import Page, PageFollower
-from pages.permissions import IsAdmin, IsModerator, IsUser
+from pages.permissions import PageRolePermissions
 from pages.serializers import PageFollowerSerializer, PageSerializer
+from posts.serializers import PostSerializer
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -20,12 +21,6 @@ class PageViewSet(viewsets.ModelViewSet):
         )
 
     def get_permissions(self):
-        role_permissions = {
-            "ADMIN": IsAdmin(),
-            "MODERATOR": IsModerator(),
-            "USER": IsUser(),
-        }
-
         if self.action in [
             "create",
             "list",
@@ -36,8 +31,10 @@ class PageViewSet(viewsets.ModelViewSet):
             "update",
             "partial_update",
             "destroy",
+            "block",
+            "post",
         ]:
-            return [role_permissions.get(self.request.user["role"], IsUser())]
+            return [PageRolePermissions()]
 
         return []
 
@@ -85,11 +82,33 @@ class PageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    @action(
-        detail=True, methods=["get"], permission_classes=[IsAdmin, IsModerator, IsUser]
-    )
+    @action(detail=True, methods=["get"])
     def followers(self, request, pk=None):
         page = self.get_object()
         followers = PageFollower.objects.filter(page=page)
         serializer = PageFollowerSerializer(followers, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["patch"])
+    def block(self, request, pk=None):
+        page = self.get_object()
+
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(request, self, page):
+                self.permission_denied(
+                    request, message=getattr(permission, "message", None)
+                )
+
+        page.is_blocked = True
+        page.save()
+
+        return Response({"detail": "Page has been blocked."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def post(self, request, pk=None):
+        page = self.get_object()
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(page=page)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

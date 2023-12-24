@@ -1,10 +1,11 @@
 from pages.models import Page
+from pages.serializers import PageSerializer
 from posts.models import Post, PostLike
 from rest_framework import serializers
 
 
 class PostSerializer(serializers.ModelSerializer):
-    page = serializers.PrimaryKeyRelatedField(Page, read_only=True)
+    page = PageSerializer(Page, read_only=True)
 
     class Meta:
         model = Post
