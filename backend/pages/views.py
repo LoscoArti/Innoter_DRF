@@ -1,10 +1,22 @@
+from datetime import timedelta
+
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from pages.models import Page, PageFollower
 from pages.permissions import PageRolePermissions
 from pages.serializers import PageFollowerSerializer, PageSerializer
+from posts.models import Post
 from posts.serializers import PostSerializer
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
+
+
+class PagePagination(PageNumberPagination):
+    page_size = 30
+    page_size_query_param = "limit"
+    max_page_size = 100
 
 
 class PageViewSet(viewsets.ModelViewSet):
@@ -33,14 +45,17 @@ class PageViewSet(viewsets.ModelViewSet):
             "destroy",
             "block",
             "post",
+            "page_posts",
         ]:
             return [PageRolePermissions()]
 
         return []
 
     def check_object_permissions(self, request, obj):
-        if self.action in ["follow", "unfollow"]:
+        # any logged in user can follow/unfollow and see page posts
+        if self.action in ["follow", "unfollow", "page_posts"]:
             return
+        # any other action requires page owner or admin/moderator
         super().check_object_permissions(request, obj)
         for permission in self.get_permissions():
             if not permission.has_object_permission(request, self, obj):
@@ -100,6 +115,7 @@ class PageViewSet(viewsets.ModelViewSet):
                 )
 
         page.is_blocked = True
+        page.unblock_date = timezone.now() + timedelta(minutes=15)
         page.save()
 
         return Response({"detail": "Page has been blocked."}, status=status.HTTP_200_OK)
@@ -112,3 +128,26 @@ class PageViewSet(viewsets.ModelViewSet):
             serializer.save(page=page)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"])
+    def page_posts(self, request, pk=None):
+        page = self.get_object()
+        posts = Post.objects.filter(page=page).order_by("-created_at")
+        paginator = PagePagination()
+        page_posts = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(page_posts, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class FeedViewSet(viewsets.ViewSet):
+    def list(self, request):
+        user_id = request.user["user_id"]
+        followed_pages = PageFollower.objects.filter(user_id=user_id).values_list(
+            "page", flat=True
+        )
+        posts = Post.objects.filter(page__in=followed_pages).order_by("-created_at")
+        paginator = PagePagination()
+        page_posts = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(page_posts, many=True)
+
+        return paginator.get_paginated_response(serializer.data)

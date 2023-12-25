@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 
 class PostSerializer(serializers.ModelSerializer):
-    page = PageSerializer(Page, read_only=True)
+    page = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Post
@@ -26,9 +26,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class PostLikeSerializer(serializers.ModelSerializer):
-    post = PostSerializer(read_only=True)
-
     class Meta:
         model = PostLike
-        fields = ("id", "post", "user_id")
-        read_only_fields = ("id", "user_id")
+        fields = ("id", "post", "user_id", "created_at")
+        read_only_fields = ("id", "created_at")
