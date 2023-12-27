@@ -11,7 +11,7 @@ class Post(models.Model):
     reply_to = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="replies"
     )
-    likes_user_ids = models.JSONField(default=list)
+    likes_user_ids = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

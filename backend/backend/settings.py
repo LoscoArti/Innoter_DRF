@@ -103,3 +103,12 @@ STATIC_URL = "static/"
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "utils.custom_authentication.CustomJWTAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "utils.custom_permissions.IsLoggedIn",
+    ],
+}
