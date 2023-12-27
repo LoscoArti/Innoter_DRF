@@ -16,6 +16,10 @@ pre-commit = "^3.6.0"
 django-filter = "^23.5"
 pyjwt = "^2.8.0"
 celery = "^5.3.6"
+redis = "^5.0.1"
+django-celery-beat = "^2.5.0"
+django-celery-results = "^2.5.1"
+python-decouple = "^3.8"
 
 
 [build-system]

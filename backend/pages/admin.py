@@ -1,5 +1,4 @@
 from django.contrib import admin
-
-from .models import Page, PageFollower
+from pages.models import Page, PageFollower
 
 admin.site.register((Page, PageFollower))
