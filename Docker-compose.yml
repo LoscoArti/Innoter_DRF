@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: ./entrypoint.sh
+    volumes:
+      - .:/innoter_drf
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASS}@db:5433/${DB_NAME}
+    env_file:
+      - .env
+
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+    env_file:
+      - .env
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+
+  celeryworker:
+    build: .
+    command: celery -A backend worker --loglevel=info
+    volumes:
+      - .:/innoter_drf
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+
+  celerybeat:
+    build: .
+    command: celery -A backend beat --loglevel=info
+    volumes:
+      - .:/innoter_drf
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:
